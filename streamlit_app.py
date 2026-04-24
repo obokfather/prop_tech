@@ -138,12 +138,12 @@ def get_ym_list(months=36):
     return [(now - relativedelta(months=i)).strftime("%Y%m") for i in range(months)]
 
 # ============================================================
-# 2. 단지명 추론 (GPT-4o) — 캐시로 재호출 방지
+# 2. 단지명 추론 (gpt-4o-mini) — 캐시로 재호출 방지
 # ============================================================
 @st.cache_data(show_spinner=False)
 def resolve_complex_name(user_input: str) -> tuple[str, str]:
     resp = get_openai_client().chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4o-mini",
         response_format={"type": "json_object"},
         messages=[
             {"role": "system", "content": (
@@ -357,7 +357,7 @@ def fetch_molit_transactions(lawd_cd: str, complex_name: str) -> dict:
     }
 
 # ============================================================
-# 6. GPT-4o 분석
+# 6. gpt-4o-mini 분석
 # ============================================================
 @st.cache_data(show_spinner=False)
 def analyze_with_gpt(complex_name, address, households, year,
@@ -381,7 +381,7 @@ def analyze_with_gpt(complex_name, address, households, year,
 }}
 """
     resp = get_openai_client().chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4o-mini",
         response_format={"type": "json_object"},
         messages=[
             {"role": "system", "content": "10년 경력 부동산 애널리스트. 데이터 기반, 솔직하게."},
@@ -443,7 +443,7 @@ if (go or q) and q:
 
     with progress_placeholder.container():
         with st.status("AI 분석 중...", expanded=True) as status_box:
-            st.write("🧠 단지명 추론 중 (GPT-4o)...")
+            st.write("🧠 단지명 추론 중 (gpt-4o-mini)...")
             keyword, reasoning = resolve_complex_name(q)
 
             st.write(f"🔍 '{keyword}' 네이버 검색 중...")
@@ -461,7 +461,7 @@ if (go or q) and q:
             transactions = (fetch_molit_transactions(lawd_cd, info["complex_name"])
                             if lawd_cd else {"error": "지역코드 없음"})
 
-            st.write("🤖 GPT-4o 투자 분석 중...")
+            st.write("🤖 gpt-4o-mini 투자 분석 중...")
             # 분석용 요약 문자열 생성
             l_lines = [
                 f"총 매물: {listings.get('total_count',0)}건 (중복제거)",
