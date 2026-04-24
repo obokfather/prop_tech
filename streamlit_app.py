@@ -144,13 +144,13 @@ def get_ym_list(months=36):
 def resolve_complex_name(user_input: str) -> tuple[str, str]:
     resp = get_openai_client().chat.completions.create(
         model="gpt-4o-mini",
-        response_format={"type": "json_object"},
         messages=[
             {"role": "system", "content": (
                 "당신은 한국 부동산 전문가입니다. 사용자 입력(단지명·주소·필지명·재개발구역명 등)에서 "
                 "네이버 부동산 검색에 최적화된 키워드를 추론하세요.\n"
                 "예: '은마'→'은마아파트', '반포 1구역'→'래미안원베일리', "
                 "'압구정 현대'→'압구정현대아파트'\n"
+                "반드시 아래 JSON 형식으로만 응답하세요:\n"
                 '{"search_keyword":"...","reasoning":"한 줄 근거"}'
             )},
             {"role": "user", "content": user_input},
@@ -382,15 +382,17 @@ def analyze_with_gpt(complex_name, address, households, year,
 """
     resp = get_openai_client().chat.completions.create(
         model="gpt-4o-mini",
-        response_format={"type": "json_object"},
         messages=[
-            {"role": "system", "content": "10년 경력 부동산 애널리스트. 데이터 기반, 솔직하게."},
+            {"role": "system", "content": "10년 경력 부동산 애널리스트. 데이터 기반, 솔직하게. 반드시 JSON으로만 응답."},
             {"role": "user",   "content": f"'{original_input}' 분석:\n{prompt}"},
         ],
         temperature=0.2,
     )
     try:
-        return json.loads(resp.choices[0].message.content)
+        content = resp.choices[0].message.content
+        start = content.find("{")
+        end = content.rfind("}") + 1
+        return json.loads(content[start:end])
     except:
         return {"error": "분석 실패"}
 
