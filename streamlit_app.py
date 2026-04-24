@@ -28,7 +28,15 @@ except ImportError:
 
 OPENAI_API_KEY = _get_secret("OPENAI_API_KEY")
 MOLIT_API_KEY  = _get_secret("MOLIT_API_KEY")
-openai_client  = OpenAI(api_key=OPENAI_API_KEY)
+def get_openai_client():
+    key = _get_secret("OPENAI_API_KEY")
+    if not key:
+        st.error("OPENAI_API_KEY 없음 — Secrets 설정 필요")
+        st.stop()
+    return OpenAI(api_key=key)
+
+def get_molit_key():
+    return _get_secret("MOLIT_API_KEY")
 
 # ============================================================
 # 1. 유틸리티
@@ -134,7 +142,7 @@ def get_ym_list(months=36):
 # ============================================================
 @st.cache_data(show_spinner=False)
 def resolve_complex_name(user_input: str) -> tuple[str, str]:
-    resp = openai_client.chat.completions.create(
+    resp = get_openai_client().chat.completions.create(
         model="gpt-4o",
         response_format={"type": "json_object"},
         messages=[
@@ -283,7 +291,7 @@ MOLIT_URL = (
 
 def _fetch_month(lawd_cd, ym, complex_name):
     try:
-        params = {"serviceKey": MOLIT_API_KEY, "LAWD_CD": lawd_cd,
+        params = {"serviceKey": get_molit_key(), "LAWD_CD": lawd_cd,
                   "DEAL_YMD": ym, "numOfRows": "100", "pageNo": "1"}
         res = requests.get(MOLIT_URL, params=params, timeout=6)
         if res.status_code != 200:
@@ -372,7 +380,7 @@ def analyze_with_gpt(complex_name, address, households, year,
   "caution_points":    "리스크 1~2가지"
 }}
 """
-    resp = openai_client.chat.completions.create(
+    resp = get_openai_client().chat.completions.create(
         model="gpt-4o",
         response_format={"type": "json_object"},
         messages=[
